@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Квиз: Что вы знаете о воде?</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f6ff;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .wrap { width: 100%; max-width: 560px; }
+
+  .header { text-align: center; margin-bottom: 24px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+  .header p { font-size: 13px; color: #64748b; }
+
+  .progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .progress-bar { flex: 1; height: 6px; background: #dbeafe; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #38bdf8); border-radius: 99px; transition: width 0.5s ease; }
+  .q-num { font-size: 12px; color: #64748b; white-space: nowrap; font-weight: 500; }
+
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 2px 20px rgba(37,99,235,0.08);
+    margin-bottom: 16px;
+  }
+
+  .question { font-size: 16px; font-weight: 600; color: #0f172a; line-height: 1.5; margin-bottom: 20px; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    padding: 13px 16px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 14px;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    line-height: 1.4;
+  }
+  .opt:hover:not(.disabled) { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+  .opt.correct { background: #f0fdf4; border-color: #16a34a; color: #14532d; font-weight: 500; }
+  .opt.wrong { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; }
+  .opt.show-correct { background: #f0fdf4; border-color: #16a34a; color: #14532d; opacity: 0.75; }
+  .opt.disabled { cursor: default; }
+
+  .feedback {
+    margin-top: 14px;
+    padding: 12px 15px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    display: none;
+  }
+  .feedback.visible { display: block; }
+  .feedback.ok { background: #f0fdf4; border-left: 4px solid #16a34a; color: #14532d; }
+  .feedback.err { background: #fef2f2; border-left: 4px solid #dc2626; color: #7f1d1d; }
+  .feedback strong { font-weight: 600; }
+
+  .next-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 13px;
+    border-radius: 12px;
+    border: none;
+    background: #2563eb;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+    transition: background 0.15s;
+  }
+  .next-btn:hover { background: #1d4ed8; }
+  .next-btn.visible { display: block; }
+
+  /* RESULT */
+  .result-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: 0 2px 20px rgba(37,99,235,0.08);
+    text-align: center;
+  }
+  .score-circle {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    color: #fff;
+  }
+  .score-num { font-size: 32px; font-weight: 700; line-height: 1; }
+  .score-sub { font-size: 11px; opacity: 0.85; }
+
+  .result-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+  .result-text { font-size: 13px; color: #475569; line-height: 1.65; margin-bottom: 20px; }
+
+  .divider { height: 1px; background: #e2e8f0; margin: 20px 0; }
+
+  .espring-block { background: #eff6ff; border-radius: 14px; padding: 18px; margin-bottom: 18px; text-align: left; }
+  .espring-title { font-size: 14px; font-weight: 700; color: #1d4ed8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .espring-rows { display: flex; flex-direction: column; gap: 8px; }
+  .espring-row { display: flex; gap: 10px; align-items: flex-start; }
+  .espring-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .espring-row-text { font-size: 13px; color: #1e3a8a; line-height: 1.45; }
+  .espring-row-text strong { font-weight: 600; }
+
+  .cta-section { display: flex; flex-direction: column; gap: 8px; }
+  .cta-primary {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: #2563eb;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .cta-primary:hover { background: #1d4ed8; }
+  .cta-secondary {
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px solid #cbd5e1;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .cta-secondary:hover { border-color: #94a3b8; color: #475569; }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 16px; }
+  .badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 99px; }
+  .b-green { background: #dcfce7; color: #14532d; }
+  .b-blue { background: #dbeafe; color: #1e3a8a; }
+  .b-purple { background: #ede9fe; color: #4c1d95; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>💧 Что вы знаете о воде?</h1>
+    <p>8 вопросов · 5 минут · Узнайте правду о воде в UK</p>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+    <div class="q-num" id="qnum">1 / 8</div>
+  </div>
+
+  <div id="quiz-area"></div>
+</div>
+
+<script>
+const qs = [
+  {
+    q: "Вода в UK официально «безопасна для питья». Что это реально означает?",
+    opts: [
+      "Она чистая, полезная и без загрязнителей",
+      "Она не представляет острой угрозы жизни прямо сейчас",
+      "Она прошла все мировые проверки качества",
+      "Она содержит только природные минералы"
+    ],
+    correct: 1,
+    ok: "✓ Верно. «Safe to drink» означает лишь отсутствие острой угрозы — не долгосрочную пользу. Микропластик, ПФАС и остатки фармпрепаратов в эти стандарты просто не входят.",
+    err: "На самом деле «безопасна» означает лишь «не убьёт прямо сейчас». Хлор, микропластик, ПФАС и тяжёлые металлы при этом вполне могут присутствовать в воде."
+  },
+  {
+    q: "Кипячение воды — надёжная защита от загрязнителей?",
+    opts: [
+      "Да, убивает всё вредное",
+      "Частично — только биологические угрозы (бактерии, вирусы)",
+      "Нет, делает воду только хуже",
+      "Только при кипячении более 10 минут"
+    ],
+    correct: 1,
+    ok: "✓ Правильно. Кипячение убивает бактерии и вирусы. Но микропластик, ПФАС, свинец и фармпрепараты остаются в воде. А хлор при нагреве образует токсичные побочные продукты.",
+    err: "Кипячение работает только против биологии. Химические загрязнители — ПФАС, микропластик, тяжёлые металлы — остаются нетронутыми. Хлор при нагреве даже образует вредные соединения."
+  },
+  {
+    q: "Сколько частиц микропластика содержится в одном литре бутилированной воды (данные 2024 года)?",
+    opts: [
+      "Около 100 частиц",
+      "До 10 000 частиц",
+      "До 240 000 частиц",
+      "Микропластика в бутылках нет"
+    ],
+    correct: 2,
+    ok: "✓ Верно — до 240 000 частиц на литр. Большинство выделяется из самой пластиковой тары, особенно при нагреве на складе или в машине. Источник: Qian et al., 2024.",
+    err: "По данным исследования 2024 года — до 240 000 частиц на литр. Большинство выделяется из самой бутылки, особенно при нагреве. Именно поэтому бутилированная вода — не решение."
+  },
+  {
+    q: "Что происходит с организмом при длительном употреблении жёсткой воды из-под крана?",
+    opts: [
+      "Ничего — кальций очень полезен",
+      "Укрепляет кости и зубы",
+      "Может способствовать образованию камней в почках",
+      "Всё выводится естественным путём без последствий"
+    ],
+    correct: 2,
+    ok: "✓ Правильно. Избыток кальция из жёсткой воды может накапливаться и способствовать образованию камней. Особенно актуально для жителей Kent — одного из самых жёстких регионов UK.",
+    err: "Длительное употребление жёсткой воды в избытке повышает риск образования почечных камней. Врачи в жёстких регионах UK — Kent, Essex — подтверждают это регулярно."
+  },
+  {
+    q: "От чего защищает кувшинный фильтр (Brita и аналоги)?",
+    opts: [
+      "От бактерий и вирусов",
+      "От жёсткости, хлора и улучшает вкус",
+      "От микропластика и ПФАС",
+      "От всего перечисленного"
+    ],
+    correct: 1,
+    ok: "✓ Точно. Кувшины хороши для жёсткости и хлора — вода становится мягче и вкуснее. Но вирусы, бактерии, микропластик и ПФАС — не их задача.",
+    err: "Кувшинные фильтры работают с жёсткостью и хлором. Вирусы, бактерии, микропластик, ПФАС — это уже другой уровень, который требует иных технологий и сертификатов."
+  },
+  {
+    q: "Обратный осмос называют «лучшей системой». Что он делает с минералами?",
+    opts: [
+      "Сохраняет все полезные минералы",
+      "Удаляет только вредные вещества, оставляет полезные",
+      "Удаляет абсолютно всё — включая кальций и магний",
+      "Добавляет полезные минералы"
+    ],
+    correct: 2,
+    ok: "✓ Верно. Осмос удаляет практически всё без разбора. ВОЗ предупреждает: длительное употребление деминерализованной воды нарушает водно-солевой баланс организма.",
+    err: "Обратный осмос удаляет всё — в том числе кальций и магний. Такую воду называют «мёртвой». ВОЗ рекомендует минимальное содержание минералов в питьевой воде."
+  },
+  {
+    q: "Что означает сертификат NSF/ANSI 55 на системе очистки воды?",
+    opts: [
+      "Производитель сам проверил качество своей системы",
+      "Система протестирована независимой лабораторией на уничтожение микроорганизмов",
+      "Система одобрена только для промышленного применения",
+      "Система прошла косметическую проверку вкуса"
+    ],
+    correct: 1,
+    ok: "✓ Правильно. NSF/ANSI 55 — независимый международный стандарт на уничтожение микроорганизмов. Это не реклама и не самосертификация — это внешняя лаборатория с конкретными цифрами.",
+    err: "NSF/ANSI 55 — это независимая внешняя лаборатория, которая проверяет реальную эффективность системы против микроорганизмов. Не самосертификация производителя."
+  },
+  {
+    q: "Один картридж eSpring рассчитан на 5000 литров. Сколько бутылок 0,5л это заменяет?",
+    opts: [
+      "1 000 бутылок",
+      "5 000 бутылок",
+      "7 500 бутылок",
+      "10 000 бутылок"
+    ],
+    correct: 3,
+    ok: "✓ Верно — 10 000 бутылок в год вместо одного картриджа. Это не только экономия денег, но и 10 000 бутылок, которые не окажутся на свалке — каждая из них разлагается до 450 лет.",
+    err: "5000л ÷ 0,5л = 10 000 бутылок. Один картридж заменяет 10 000 одноразовых бутылок. Каждая из которых разлагается до 450 лет."
+  }
+];
+
+let cur = 0, score = 0, picked = false;
+
+function render() {
+  const total = qs.length;
+  const pct = Math.round((cur / total) * 100);
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('qnum').textContent = (cur + 1) + ' / ' + total;
+
+  if (cur >= total) { showResult(); return; }
+
+  const q = qs[cur];
+  document.getElementById('quiz-area').innerHTML = `
+    <div class="card">
+      <div class="question">${q.q}</div>
+      <div class="options" id="opts">
+        ${q.opts.map((o, i) => `<button class="opt" onclick="pick(${i})">${o}</button>`).join('')}
+      </div>
+      <div class="feedback" id="fb"></div>
+      <button class="next-btn" id="nxt" onclick="next()">
+        ${cur < total - 1 ? 'Следующий вопрос →' : 'Узнать результат →'}
+      </button>
+    </div>`;
+  picked = false;
+}
+
+function pick(idx) {
+  if (picked) return;
+  picked = true;
+  const q = qs[cur];
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach(o => o.classList.add('disabled'));
+
+  const isOk = idx === q.correct;
+  if (isOk) score++;
+
+  opts[idx].classList.add(isOk ? 'correct' : 'wrong');
+  if (!isOk) opts[q.correct].classList.add('show-correct');
+
+  const fb = document.getElementById('fb');
+  fb.className = 'feedback visible ' + (isOk ? 'ok' : 'err');
+  fb.innerHTML = `<strong>${isOk ? 'Верно!' : 'Не совсем.'}</strong> ${isOk ? q.ok : q.err}`;
+
+  const nxt = document.getElementById('nxt');
+  nxt.classList.add('visible');
+}
+
+function next() { cur++; render(); }
+
+function showResult() {
+  document.getElementById('prog').style.width = '100%';
+  document.getElementById('qnum').textContent = 'Результат';
+
+  const total = qs.length;
+  let title, text;
+  if (score <= 3) {
+    title = '💡 Теперь вы знаете больше';
+    text = 'Большинство людей не знает реальных цифр о воде, которую пьёт каждый день. Это нормально — но теперь у вас есть факты, а не убеждения.';
+  } else if (score <= 6) {
+    title = '👍 Вы разбираетесь лучше среднего';
+    text = 'Несколько важных нюансов всё же остались. Особенно про то, что обычные фильтры и бутылки не решают проблему полностью — и почему сертификаты важнее рекламы.';
+  } else {
+    title = '🎯 Отличный результат!';
+    text = 'Вы хорошо разбираетесь в теме качества воды. Такие люди обычно уже задумались о серьёзной системе очистки — или уже используют её.';
+  }
+
+  document.getElementById('quiz-area').innerHTML = `
+    <div class="result-card">
+      <div class="score-circle">
+        <div class="score-num">${score}/${total}</div>
+        <div class="score-sub">правильных</div>
+      </div>
+      <div class="result-title">${title}</div>
+      <div class="result-text">${text}</div>
+
+      <div class="badge-row">
+        <span class="badge b-green">NSF сертификат</span>
+        <span class="badge b-blue">170+ загрязнителей</span>
+        <span class="badge b-purple">УФ-C LED</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="espring-block">
+        <div class="espring-title">💧 New eSpring Water Treatment System 2025</div>
+        <div class="espring-rows">
+          <div class="espring-row"><div class="espring-icon">🔵</div><div class="espring-row-text"><strong>4 ступени защиты:</strong> механика · мембрана · уголь · УФ-C LED</div></div>
+          <div class="espring-row"><div class="espring-icon">🔵</div><div class="espring-row-text"><strong>170+ загрязнителей</strong> — ПФАС, свинец, хлор, микропластик, фармпрепараты</div></div>
+          <div class="espring-row"><div class="espring-icon">🔵</div><div class="espring-row-text"><strong>99,9999% бактерий · 99,99% вирусов</strong> — без химии, без привкуса</div></div>
+          <div class="espring-row"><div class="espring-icon">🔵</div><div class="espring-row-text"><strong>Сертификаты NSF 42, 53, 55, 401 + WQA</strong> — лабораторные испытания, не реклама</div></div>
+          <div class="espring-row"><div class="espring-icon">🔵</div><div class="espring-row-text"><strong>Замена фильтра</strong> — 2 минуты, раз в год, без инструментов</div></div>
+          <div class="espring-row"><div class="espring-icon">🔵</div><div class="espring-row-text"><strong>Бренд №1 в мире</strong> по объёму продаж (Verify Markets, 2021)</div></div>
+        </div>
+      </div>
+
+      <div class="cta-section">
+        <button class="cta-primary" onclick="alert('Напишите в директ для консультации по eSpring!')">
+          Хочу узнать подробнее об eSpring →
+        </button>
+        <button class="cta-secondary" onclick="restart()">Пройти квиз заново</button>
+      </div>
+    </div>`;
+}
+
+function restart() { cur = 0; score = 0; picked = false; render(); }
+render();
+</script>
+</body>
+</html>
